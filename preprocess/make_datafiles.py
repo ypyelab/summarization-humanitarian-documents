@@ -205,7 +205,6 @@ def get_art_abs(story_file):
       highlights.append(line)
     else:
       article_lines.append(line)
-  print(len(highlights))
   # Make article into a single string
   article = ' '.join(article_lines)
 
@@ -293,29 +292,29 @@ if __name__ == '__main__':
   if not os.path.exists(docs_processed_es_dir): os.makedirs(docs_processed_es_dir)
 
   # Run tokenizer on documents dirs, outputting to tokenized documents directories
-  #tokenize_documents(docs_en_dir, docs_processed_en_dir,'en')
-  #tokenize_documents(docs_fr_dir, docs_processed_fr_dir,'fr')
+  tokenize_documents(docs_en_dir, docs_processed_en_dir,'en')
+  tokenize_documents(docs_fr_dir, docs_processed_fr_dir,'fr')
   tokenize_documents(docs_es_dir, docs_processed_es_dir,'es')
 
   # Partition files in train, validation and test
-  #partition_en = partition(docs_processed_en_dir,'document.')
-  #partition_fr = partition(docs_processed_fr_dir,'document.')
+  partition_en = partition(docs_processed_en_dir,'document.')
+  partition_fr = partition(docs_processed_fr_dir,'document.')
   partition_es = partition(docs_processed_es_dir,'document.')
   
   # Read the tokenized files, do a little postprocessing then write to bin files
-  #write_to_bin(partition_en, 'test',docs_processed_en_dir, os.path.join(docs_processed_en_dir, "test.bin"))
-  #write_to_bin(partition_en, 'val', docs_processed_en_dir, os.path.join(docs_processed_en_dir, "val.bin"))
-  #write_to_bin(partition_en, 'train', docs_processed_en_dir, os.path.join(docs_processed_en_dir, "train.bin"), makevocab=True)
+  write_to_bin(partition_en, 'test',docs_processed_en_dir, os.path.join(docs_processed_en_dir, "test.bin"))
+  write_to_bin(partition_en, 'val', docs_processed_en_dir, os.path.join(docs_processed_en_dir, "val.bin"))
+  write_to_bin(partition_en, 'train', docs_processed_en_dir, os.path.join(docs_processed_en_dir, "train.bin"), makevocab=True)
 
-  #write_to_bin(partition_fr, 'test',docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "test.bin"))
-  #write_to_bin(partition_fr, 'val', docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "val.bin"))
-  #write_to_bin(partition_fr, 'train', docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "train.bin"), makevocab=True)
+  write_to_bin(partition_fr, 'test',docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "test.bin"))
+  write_to_bin(partition_fr, 'val', docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "val.bin"))
+  write_to_bin(partition_fr, 'train', docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "train.bin"), makevocab=True)
 
   write_to_bin(partition_es, 'test', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "test.bin"))
   write_to_bin(partition_es, 'val', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "val.bin"))
   write_to_bin(partition_es, 'train', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "train.bin"), makevocab=True)
 
   # Chunk the data. This splits each of train.bin, val.bin and test.bin into smaller chunks, each containing e.g. 1000 examples, and saves them in e.g. data_processed_en_dir/chunks
-  #chunk_all(docs_processed_en_dir,chunks_en_dir)
-  #chunk_all(docs_processed_fr_dir,chunks_fr_dir)
-  #chunk_all(docs_processed_es_dir,chunks_es_dir)
+  chunk_all(docs_processed_en_dir,chunks_en_dir)
+  chunk_all(docs_processed_fr_dir,chunks_fr_dir)
+  chunk_all(docs_processed_es_dir,chunks_es_dir)
