@@ -24,7 +24,7 @@ SENTENCE_END = '</s>'
 
 docs_processed_en_dir = "/idiap/temp/jbello/summarization-humanitarian-documents/data/collection/docs_with_summaries_processed/en/"
 docs_processed_fr_dir = "/idiap/temp/jbello/summarization-humanitarian-documents/data/collection/docs_with_summaries_processed/fr/"
-docs_processed_es_dir = "/idiap/temp/jbello/summarization-humanitarian-documents/data/collection/docs_with_summaries_processed/es/"
+docs_processed_es_dir = "/idiap/temp/jbello/summarization-humanitarian-documents/data/collection/docs_with_summaries_processed/test/"
 chunks_en_dir = os.path.join(docs_processed_en_dir, "chunked")
 chunks_fr_dir = os.path.join(docs_processed_fr_dir, "chunked")
 chunks_es_dir = os.path.join(docs_processed_es_dir, "chunked")
@@ -73,7 +73,7 @@ def read_directory(directory, name_text = '.txt'):
     for file in os.listdir(directory):
         filename = str(file)
         if (name_text) in filename:
-            with codecs.open(os.path.join(directory,filename),encoding="utf8") as f:
+            with codecs.open(os.path.join(directory,filename),encoding="utf-8") as f:
                 filenames.append(filename)
                 documents.append(f.read())
     return filenames, documents
@@ -152,7 +152,7 @@ def tokenize_documents(documents_dir, tokenized_documents_dir, language):
           nlp.max_length = len(d) + 1
       doc = nlp(d)
       tokens = [token.text for token in doc]
-      tok_doc.append('\n'.join(tokens))
+      tok_doc.append(' '.join(tokens))
 
   save_documents(ids,tok_doc,tokenized_documents_dir)
 
@@ -168,10 +168,10 @@ def tokenize_documents(documents_dir, tokenized_documents_dir, language):
 
 def read_text_file(text_file):
   lines = []
-  text_file = text_file.split(' ')
+  text_file = text_file.split('\n\n')
   for line in text_file:
       lines.append(line.strip())
-  return lines
+  return text_file
 
 
 def fix_missing_period(line):
