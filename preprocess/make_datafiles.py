@@ -199,13 +199,13 @@ def get_art_abs(story_file):
   for idx,line in enumerate(lines):
     if line == "":
       continue # empty line
-    elif line.startswith("@highlight"):
+    elif line.startswith(" @highlight"):
       next_is_highlight = True
     elif next_is_highlight:
       highlights.append(line)
     else:
       article_lines.append(line)
-
+  print(len(highlights))
   # Make article into a single string
   article = ' '.join(article_lines)
 
