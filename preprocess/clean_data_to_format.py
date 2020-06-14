@@ -57,6 +57,12 @@ def split_doc(text):
     summary = '\n\n'.join(summary)
     return document, summary
 
+def save_texts(relative_path, name_text, texts, id_texts):
+    for i in range(0,len(texts)):
+        complete_text_name = os.path.join(relative_path,name_text+str(id_texts[i]) + '.txt')
+        with open(complete_text_name,'w', encoding ='utf8') as f:
+            f.write(texts[i])
+
 def clean_data_to_format(directory,partition, part):
     print ('Begin reading of data')
     _, texts = select_partition(directory, partition, part)
@@ -73,8 +79,8 @@ def clean_data_to_format(directory,partition, part):
         output_sum = output_sum + '\"'+original_summary+'\" \n'
 
     print('Saving data')
-    save_texts(save_path, part+'.src',[output_doc],[''])
-    save_texts(save_path, part+'.tgt',[output_sum],[''])
+    save_texts(directory, part+'.src',[output_doc],[''])
+    save_texts(directory, part+'.tgt',[output_sum],[''])
     print('Saved data')
 
 if __name__ == '__main__':
@@ -88,6 +94,12 @@ if __name__ == '__main__':
     partition_file_fr = sys.argv[5]
     partition_file_es = sys.argv[6]
 
+
+    print('Processing of Spanish text started!')    
+    clean_data_to_format(data_directory_es, partition_file_es, 'train')
+    clean_data_to_format(data_directory_es, partition_file_es, 'val')
+    clean_data_to_format(data_directory_es, partition_file_es, 'test')
+
     print('Processing of English text started!')
     clean_data_to_format(data_directory_en, partition_file_en, 'train')
     clean_data_to_format(data_directory_en, partition_file_en, 'val')
@@ -98,8 +110,8 @@ if __name__ == '__main__':
     clean_data_to_format(data_directory_fr, partition_file_fr, 'val')
     clean_data_to_format(data_directory_fr, partition_file_fr, 'test')
 
-    print('Processing of Spanish text started!')    
-    clean_data_to_format(data_directory_es, partition_file_es, 'train')
-    clean_data_to_format(data_directory_es, partition_file_es, 'val')
-    clean_data_to_format(data_directory_es, partition_file_es, 'test')
+    #print('Processing of Spanish text started!')    
+    #clean_data_to_format(data_directory_es, partition_file_es, 'train')
+    #clean_data_to_format(data_directory_es, partition_file_es, 'val')
+    #clean_data_to_format(data_directory_es, partition_file_es, 'test')
 
