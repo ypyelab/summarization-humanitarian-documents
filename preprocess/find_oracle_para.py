@@ -4,8 +4,8 @@ import gc
 import math
 import datetime
 import multiprocessing
-sys.path.append('/ypyelab/summarization-humanitarian-documents/others/')
-from PyRouge.Rouge.Rouge import Rouge
+sys.path.insert(1,'/Users/jennypaolayelabello/Documents/GitHub/summarization-humanitarian-documents/others/')
+#from PyRouge.Rouge.Rouge import Rouge
 from Document import Document
 
 MAX_COMB_L = 5
