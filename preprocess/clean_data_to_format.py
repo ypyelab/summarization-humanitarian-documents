@@ -73,8 +73,8 @@ def clean_data_to_format(directory,partition, part):
         document, summary = split_doc(text) 
         original_document = split_sentences(document)
         original_summary = split_sentences(summary)
-        original_document = ' ###SENT### '.join(original_document)
-        original_summary = ' ####SENT### '.join(original_summary)
+        original_document = ' ##SENT## '.join(original_document)
+        original_summary = ' ##SENT## '.join(original_summary)
         output_doc = output_doc + '\"'+original_document+'\" \n'
         output_sum = output_sum + '\"'+original_summary+'\" \n'
 
