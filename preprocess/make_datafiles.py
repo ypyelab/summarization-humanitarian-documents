@@ -10,7 +10,13 @@ import re
 import numpy as np
 from random import shuffle
 import tensorflow as tf
+import json
 from tensorflow.core.example import example_pb2
+from tensorflow.core.example import example_pb2
+
+#!python -m spacy download es_core_news_sm
+#!python -m spacy download en_core_web_sm
+#!python -m spacy download fr_core_news_sm
 
 
 dm_single_close_quote = u'\u2019' # unicode
@@ -22,47 +28,13 @@ SENTENCE_START = '<s>'
 SENTENCE_END = '</s>'
 
 
-docs_processed_en_dir = "/idiap/temp/jbello/summarization-humanitarian-documents/data/collection/docs_with_summaries_processed/en/"
-docs_processed_fr_dir = "/idiap/temp/jbello/summarization-humanitarian-documents/data/collection/docs_with_summaries_processed/fr/"
-docs_processed_es_dir = "/idiap/temp/jbello/summarization-humanitarian-documents/data/collection/docs_with_summaries_processed/es/"
-chunks_en_dir = os.path.join(docs_processed_en_dir, "chunked")
-chunks_fr_dir = os.path.join(docs_processed_fr_dir, "chunked")
-chunks_es_dir = os.path.join(docs_processed_es_dir, "chunked")
+docs_processed_en_dir = "data/collection/docs_with_summaries_processed/en/"
+docs_processed_fr_dir = "data/collection/docs_with_summaries_processed/fr/"
+docs_processed_es_dir = "data/collection/docs_with_summaries_processed/es/"
 
 
 VOCAB_SIZE = 200000
 CHUNK_SIZE = 1000 # num examples per chunk, for the chunked data
-
-
-def chunk_file(set_name,files_dir, chunks_dir):
-  in_file = str(files_dir)+'%s.bin' % set_name
-  reader = open(in_file, "rb")
-  chunk = 0
-  finished = False
-  while not finished:
-    chunk_fname = os.path.join(chunks_dir, '%s_%03d.bin' % (set_name, chunk)) # new chunk
-    with open(chunk_fname, 'wb') as writer:
-      for _ in range(CHUNK_SIZE):
-        len_bytes = reader.read(8)
-        if not len_bytes:
-          finished = True
-          break
-        str_len = struct.unpack('q', len_bytes)[0]
-        example_str = struct.unpack('%ds' % str_len, reader.read(str_len))[0]
-        writer.write(struct.pack('q', str_len))
-        writer.write(struct.pack('%ds' % str_len, example_str))
-      chunk += 1
-
-
-def chunk_all(files_dir,chunks_dir):
-  # Make a dir to hold the chunks
-  if not os.path.isdir(chunks_dir):
-    os.mkdir(chunks_dir)
-  # Chunk the data
-  for set_name in ['train', 'val', 'test']:
-    print ("Splitting "+str(set_name) +" data into chunks...") 
-    chunk_file(set_name,files_dir, chunks_dir)
-  print ("Saved chunked data in " + str(chunks_dir))
 
 
 def read_directory(directory, name_text = '.txt'):
@@ -73,7 +45,7 @@ def read_directory(directory, name_text = '.txt'):
     for file in os.listdir(directory):
         filename = str(file)
         if (name_text) in filename:
-            with codecs.open(os.path.join(directory,filename),encoding="utf-8") as f:
+            with codecs.open(os.path.join(directory,filename),encoding="utf8") as f:
                 filenames.append(filename)
                 documents.append(f.read())
     return filenames, documents
@@ -90,7 +62,7 @@ def extract_id(string_with_id):
 def save_documents(idx, documents, relative_path):
     for i in range(0,len(documents)):
         complete_doc_name = os.path.join(relative_path,'document.'+ str(idx[i]) +'.txt')
-        with codecs.open(complete_doc_name,'w', encoding = 'utf-8') as f:
+        with codecs.open(complete_doc_name,'w', encoding = 'utf8') as f:
             f.write(documents[i])
 
 def partition(data_directory, name_text, language_partition = None, language = 'en', train_prop = 0.7, val_prop = 0.1, test_prop = 0.2):
@@ -128,7 +100,9 @@ def partition(data_directory, name_text, language_partition = None, language = '
             for j in range (seq[i-1], seq[i]):
                 chunk.append(ids[j])
         result.append(chunk)
+
     return result
+
 
 def tokenize_documents(documents_dir, tokenized_documents_dir, language):
   """Maps a whole directory of .txt files to a tokenized version using Spacy Tokenizer"""
@@ -156,7 +130,7 @@ def tokenize_documents(documents_dir, tokenized_documents_dir, language):
 
   save_documents(ids,tok_doc,tokenized_documents_dir)
 
-  # Check that the tokenized documents directory contains the same number of files as the original directory
+   # Check that the tokenized documents directory contains the same number of files as the original directory
   list_orig = os.listdir(documents_dir)
   num_orig = np.sum(['document.' in i for i in list_orig])
   list_tokenized = os.listdir(tokenized_documents_dir)
@@ -189,6 +163,22 @@ def get_art_abs(story_file):
   # Lowercase everything
   lines = [line.lower() for line in lines]
 
+  # Remove cid token (related with format reading of pdf documents)
+  lines = [line.replace(' cid','') for line in lines]
+
+  # Remove sequences of words with less than 3 characters
+  for line in lines:
+    count = 0
+    words = line.split(' ')
+    line_rm3 = []
+    for i in range(len(words)-2):
+      if not (len(words[i]) < 3 and len(words[i + 1]) < 3 and len(words[i + 2]) < 3):
+          line_rm3.append(words[i])
+      if (i == len(words)-2 - 1):
+          line_rm3.append(words[i + 1])
+          line_rm3.append(words[i+2])
+    line = " ".join(line_rm3)
+
   # Put periods on the ends of lines that are missing them (this is a problem in the dataset because many image captions don't end in periods; consequently they end up in the body of the article as run-on sentences)
   lines = [fix_missing_period(line) for line in lines]
 
@@ -205,16 +195,23 @@ def get_art_abs(story_file):
       highlights.append(line)
     else:
       article_lines.append(line)
+
   # Make article into a single string
   article = ' '.join(article_lines)
 
-  # Make abstract into a signle string, putting <s> and </s> tags around the sentences
+  # Make abstract into a single string, putting <s> and </s> tags around the sentences
   abstract = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in highlights])
 
-  return article, abstract
+  # Remove documents with less than 50 tokens or with documents that are smaller than their abstract
+  len_article = len(article.split(' '))
+  len_abstract = len(abstract.split(' '))
+  if (len_article < 50 or len_abstract > len_article):
+    return None, None
+  else:
+    return article, abstract
 
 
-def write_to_bin(partition_file, part, tokenized_directory, out_file, makevocab=False):
+def write_to_bin(partition_file, language, part, tokenized_directory, out_file, makevocab=False):
   """Reads the tokenized files, and partition division, and writes them to a out_file."""
 
   print("Reading files in partition ", str(part))
@@ -227,48 +224,56 @@ def write_to_bin(partition_file, part, tokenized_directory, out_file, makevocab=
   else:
       print("Error: Please provide a valid partition (i.e. train, val or test)")
 
+  partition_final = []
   filename = []
   docum = []
+  index = []
   for i in range(0,len(partition)):
       temp_fn, temp_d = read_directory(tokenized_directory, 'document.'+partition[i]+'.txt')
       #we are searching element by element(we don't want a list, we want the string name)
       filename.append(temp_fn[0])
-      docum.append(temp_d[0])                                                                                                 
+      docum.append(temp_d[0])
+      index.append(partition[i])                                                                                                 
 
   num_documents = len(docum)
 
   if (makevocab):
     vocab_counter = collections.Counter()
 
+  articles = []
+  abstracts = []
   with open(out_file, 'wb') as writer:
     for idx,s in enumerate(filename):
       #if idx % 1000 == 0:
         #print "Writing document %i of %i; %.2f percent done" % (idx, num_documents float(idx)*100.0/float(num_documents))
         
       # Get the strings to write to .bin file
-      article, abstract = get_art_abs(docum[idx].encode('raw_unicode_escape'))
+      article, abstract = get_art_abs(docum[idx])
+      if article is not None:
+        partition_final.append(index[idx])
+        articles.append(article)
+        abstracts.append(abstract)
 
-      # Write to tf.Example
-      tf_example = example_pb2.Example()
-      tf_example.features.feature['article'].bytes_list.value.extend([article])
-      tf_example.features.feature['abstract'].bytes_list.value.extend([abstract])
-      tf_example_str = tf_example.SerializeToString()
-      str_len = len(tf_example_str)
-      writer.write(struct.pack('q', str_len))
-      writer.write(struct.pack('%ds' % str_len, tf_example_str))
+        # Write to tf.Example
+        tf_example = example_pb2.Example()
+        tf_example.features.feature['article'].bytes_list.value.extend([str.encode(article)])
+        tf_example.features.feature['abstract'].bytes_list.value.extend([str.encode(abstract)])
+        tf_example_str = tf_example.SerializeToString()
+        str_len = len(tf_example_str)
+        writer.write(struct.pack('q', str_len))
+        writer.write(struct.pack('%ds' % str_len, tf_example_str))
 
-      # Write the vocab to file, if applicable
-      if (makevocab):
-        art_tokens = article.split(' ')
-        abs_tokens = abstract.split(' ')
-        abs_tokens = [t for t in abs_tokens if t not in [SENTENCE_START, SENTENCE_END]] # remove these tags from vocab
-        tokens = art_tokens + abs_tokens
-        tokens = [t.strip() for t in tokens] # strip
-        tokens = [t for t in tokens if t!=""] # remove empty
-        vocab_counter.update(tokens)
+        # Write the vocab to file, if applicable
+        if (makevocab):
+          art_tokens = article.split(' ')
+          abs_tokens = abstract.split(' ')
+          abs_tokens = [t for t in abs_tokens if t not in [SENTENCE_START, SENTENCE_END]] # remove these tags from vocab
+          tokens = art_tokens + abs_tokens
+          tokens = [t.strip() for t in tokens] # strip
+          tokens = [t for t in tokens if t!=""] # remove empty
+          vocab_counter.update(tokens)
 
-  print ("Finished writing file"+str(out_file)+"\n")
-
+  print ("Finished writing file "+str(out_file)+"\n")
   # write vocab to file
   if (makevocab):
     print ("Writing vocab file...")
@@ -276,6 +281,15 @@ def write_to_bin(partition_file, part, tokenized_directory, out_file, makevocab=
       for word, count in vocab_counter.most_common(VOCAB_SIZE):
         writer.write(word + ' ' + str(count) + '\n')
     print ("Finished writing vocab file")
+
+  with open('partition.'+language+'.'+part+'.json', 'w') as f:
+    json.dump(partition_final,f)
+
+  with open(language+'.'+part+'.src'+'.txt', 'w', encoding = 'utf8') as f:
+    f.write('\n'.join(articles))
+
+  with open(language+'.'+part+'.tgt'+'.txt', 'w',encoding = 'utf8') as f:
+    f.write('\n'.join(abstracts))
 
 
 if __name__ == '__main__':
