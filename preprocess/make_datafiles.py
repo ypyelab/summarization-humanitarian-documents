@@ -12,7 +12,6 @@ from random import shuffle
 import tensorflow as tf
 import json
 from tensorflow.core.example import example_pb2
-from tensorflow.core.example import example_pb2
 
 #!python -m spacy download es_core_news_sm
 #!python -m spacy download en_core_web_sm
@@ -316,8 +315,3 @@ if __name__ == '__main__':
   write_to_bin(partition_es, 'es', 'test', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "test.bin"))
   write_to_bin(partition_es, 'es', 'val', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "val.bin"))
   write_to_bin(partition_es, 'es', 'train', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "train.bin"), makevocab=True)
-
-  # Chunk the data. This splits each of train.bin, val.bin and test.bin into smaller chunks, each containing e.g. 1000 examples, and saves them in e.g. data_processed_en_dir/chunks
-  chunk_all(docs_processed_en_dir,chunks_en_dir)
-  #chunk_all(docs_processed_fr_dir,chunks_fr_dir)
-  #chunk_all(docs_processed_es_dir,chunks_es_dir)
