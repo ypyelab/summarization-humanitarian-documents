@@ -240,8 +240,6 @@ def write_to_bin(partition_file, language, part, tokenized_directory, out_file, 
   if (makevocab):
     vocab_counter = collections.Counter()
 
-  articles = []
-  abstracts = []
   with open(out_file, 'wb') as writer:
     for idx,s in enumerate(filename):
       #if idx % 1000 == 0:
@@ -251,8 +249,6 @@ def write_to_bin(partition_file, language, part, tokenized_directory, out_file, 
       article, abstract = get_art_abs(docum[idx])
       if article is not None:
         partition_final.append(index[idx])
-        articles.append(article)
-        abstracts.append(abstract)
 
         # Write to tf.Example
         tf_example = example_pb2.Example()
@@ -285,13 +281,6 @@ def write_to_bin(partition_file, language, part, tokenized_directory, out_file, 
   with open('partition.'+language+'.'+part+'.json', 'w') as f:
     json.dump(partition_final,f)
 
-  with open(language+'.'+part+'.src'+'.txt', 'w', encoding = 'utf8') as f:
-    f.write('\n'.join(articles))
-
-  with open(language+'.'+part+'.tgt'+'.txt', 'w',encoding = 'utf8') as f:
-    f.write('\n'.join(abstracts))
-
-
 if __name__ == '__main__':
   if len(sys.argv) != 4:
     print ("USAGE: python make_datafiles.py <docs_with_summaries_en_dir> <docs_with_summaries_fr_dir> <docs_with_summaries_es_dir>")
@@ -316,17 +305,17 @@ if __name__ == '__main__':
   partition_es = partition(docs_processed_es_dir,'document.')
   
   # Read the tokenized files, do a little postprocessing then write to bin files
-  #write_to_bin(partition_en, 'test',docs_processed_en_dir, os.path.join(docs_processed_en_dir, "test.bin"))
-  #write_to_bin(partition_en, 'val', docs_processed_en_dir, os.path.join(docs_processed_en_dir, "val.bin"))
-  #write_to_bin(partition_en, 'train', docs_processed_en_dir, os.path.join(docs_processed_en_dir, "train.bin"), makevocab=True)
+  #write_to_bin(partition_en, 'en', 'test',docs_processed_en_dir, os.path.join(docs_processed_en_dir, "test.bin"))
+  #write_to_bin(partition_en, 'en', 'val', docs_processed_en_dir, os.path.join(docs_processed_en_dir, "val.bin"))
+  #write_to_bin(partition_en, 'en', 'train', docs_processed_en_dir, os.path.join(docs_processed_en_dir, "train.bin"), makevocab=True)
 
-  #write_to_bin(partition_fr, 'test',docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "test.bin"))
-  #write_to_bin(partition_fr, 'val', docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "val.bin"))
-  #write_to_bin(partition_fr, 'train', docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "train.bin"), makevocab=True)
+  #write_to_bin(partition_fr, 'fr', test',docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "test.bin"))
+  #write_to_bin(partition_fr, 'fr', 'val', docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "val.bin"))
+  #write_to_bin(partition_fr, 'fr', 'train', docs_processed_fr_dir, os.path.join(docs_processed_fr_dir, "train.bin"), makevocab=True)
 
-  write_to_bin(partition_es, 'test', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "test.bin"))
-  write_to_bin(partition_es, 'val', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "val.bin"))
-  write_to_bin(partition_es, 'train', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "train.bin"), makevocab=True)
+  write_to_bin(partition_es, 'es', 'test', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "test.bin"))
+  write_to_bin(partition_es, 'es', 'val', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "val.bin"))
+  write_to_bin(partition_es, 'es', 'train', docs_processed_es_dir, os.path.join(docs_processed_es_dir, "train.bin"), makevocab=True)
 
   # Chunk the data. This splits each of train.bin, val.bin and test.bin into smaller chunks, each containing e.g. 1000 examples, and saves them in e.g. data_processed_en_dir/chunks
   chunk_all(docs_processed_en_dir,chunks_en_dir)
