@@ -49,7 +49,7 @@ def _binary_to_text_for_neusum(in_file, out_file):
         str_len = struct.unpack('q', len_bytes)[0]
         tf_example_str = struct.unpack(
             '%ds' % str_len, reader.read(str_len))[0]
-        tf_example = example_pb2.Example.FromString(tf_example_str.decode('utf-8'))
+        tf_example = example_pb2.Example.FromString(tf_example_str)
         src_sentences = sent_tokenize(
             "%s" % tf_example.features.feature["article"].bytes_list.value[0].decode('utf-8'))
         
