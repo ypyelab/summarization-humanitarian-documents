@@ -216,11 +216,21 @@ def remove_spaces(article):
   return article_mod
 
 
-def to_neusum(article):
-  article_mod = article.replace(" </s> <s> ", "##SENT##")
-  article_mod =  article_mod.replace("<s> ", "")
-  article_mod =  article_mod.replace(" </s>", "")
+def to_neusum_src(article):
+  article_mod = article.replace("..", ".")
+  article_mod = article_mod.replace(". . ", ".")
+  article_mod =  article_mod.replace(".", ".##SENT##")
+  article_mod =  article_mod.replace("##SENT##.##SENT##", ".##SENT##")
+  if article_mod[-8:] == '##SENT##':
+    article_mod = article_mod[:-8]
   return article_mod
+
+
+def to_neusum_tgt(abstract):
+  abstract_mod = abstract.replace(" </s> <s> ", "##SENT##")
+  abstract_mod =  abstract_mod.replace("<s> ", "")
+  abstract_mod =  abstract_mod.replace(" </s>", "")
+  return abstract_mod  
 
 
 def write_to_bin(partition_file, language, part, tokenized_directory, out_file, makevocab=False):
@@ -266,8 +276,8 @@ def write_to_bin(partition_file, language, part, tokenized_directory, out_file, 
         partition_final.append(index[idx])
         article = remove_spaces(article)
         abstract = remove_spaces(abstract)
-        articles.append(to_neusum(article))
-        abstracts.append(to_neusum(abstract))
+        articles.append(to_neusum_src(article))
+        abstracts.append(to_neusum_tgt(abstract))
 
         # Write to tf.Example
         tf_example = example_pb2.Example()
