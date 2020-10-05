@@ -4,8 +4,8 @@ import gc
 import math
 import datetime
 import multiprocessing
-sys.path.insert(1,'/Users/jennypaolayelabello/Documents/GitHub/summarization-humanitarian-documents/others/')
-#from PyRouge.Rouge.Rouge import Rouge
+
+from PyRouge.Rouge.Rouge import Rouge
 from Document import Document
 
 MAX_COMB_L = 5
@@ -80,11 +80,8 @@ def solve(documents, output_file):
 
 def load_data(src_file, tgt_file):
     docs = []
-    with open(src_file, 'r', encoding='utf-8') as f, \
-            open(tgt_file, 'r', encoding='utf-8') as g:
-        src_reader = f.read().split("\" \n")[0:-1]
-        tgt_reader = g.read().split("\" \n")[0:-1]
-        
+    with open(src_file, 'r', encoding='utf-8') as src_reader, \
+            open(tgt_file, 'r', encoding='utf-8') as tgt_reader:
         for src_line, tgt_line in zip(src_reader, tgt_reader):
             src_line = src_line.strip()
             tgt_line = tgt_line.strip()
