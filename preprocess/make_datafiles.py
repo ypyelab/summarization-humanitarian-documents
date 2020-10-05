@@ -209,6 +209,19 @@ def get_art_abs(story_file):
   else:
     return article, abstract
 
+def remove_spaces(article):
+  article_mod = article.replace("\n",' ')
+  article_mod = article.replace("\t",' ')
+  article_mod = article.replace("\r",' ')
+  return article_mod
+
+
+def to_neusum(article):
+  article_mod = article.replace(" </s> <s> ", "##SENT##")
+  article_mod =  article_mod.replace("<s> ", "")
+  article_mod =  article_mod.replace(" </s>", "")
+  return article_mod
+
 
 def write_to_bin(partition_file, language, part, tokenized_directory, out_file, makevocab=False):
   """Reads the tokenized files, and partition division, and writes them to a out_file."""
@@ -239,6 +252,8 @@ def write_to_bin(partition_file, language, part, tokenized_directory, out_file, 
   if (makevocab):
     vocab_counter = collections.Counter()
 
+  articles = []
+  abstracts = []
   with open(out_file, 'wb') as writer:
     for idx,s in enumerate(filename):
       #if idx % 1000 == 0:
@@ -246,13 +261,18 @@ def write_to_bin(partition_file, language, part, tokenized_directory, out_file, 
         
       # Get the strings to write to .bin file
       article, abstract = get_art_abs(docum[idx])
-      if article is not None:
+
+      if article:
         partition_final.append(index[idx])
+        article = remove_spaces(article)
+        abstract = remove_spaces(abstract)
+        articles.append(to_neusum(article))
+        abstracts.append(to_neusum(abstract))
 
         # Write to tf.Example
         tf_example = example_pb2.Example()
-        tf_example.features.feature['article'].bytes_list.value.extend([str.encode(article)])
-        tf_example.features.feature['abstract'].bytes_list.value.extend([str.encode(abstract)])
+        tf_example.features.feature['article'].bytes_list.value.extend([article.encode('utf8')])
+        tf_example.features.feature['abstract'].bytes_list.value.extend([article.encode('utf8')])
         tf_example_str = tf_example.SerializeToString()
         str_len = len(tf_example_str)
         writer.write(struct.pack('q', str_len))
@@ -268,6 +288,8 @@ def write_to_bin(partition_file, language, part, tokenized_directory, out_file, 
           tokens = [t for t in tokens if t!=""] # remove empty
           vocab_counter.update(tokens)
 
+  assert(len(partition_final)==len(articles) and len(articles) == len(abstracts))
+  print(len(partition_final))
   print ("Finished writing file "+str(out_file)+"\n")
   # write vocab to file
   if (makevocab):
@@ -279,6 +301,14 @@ def write_to_bin(partition_file, language, part, tokenized_directory, out_file, 
 
   with open('partition.'+language+'.'+part+'.json', 'w') as f:
     json.dump(partition_final,f)
+
+  with open(language+'.'+ part+'.src.txt', 'w', encoding = 'utf8') as writer:
+    for item in articles:
+        writer.write("%s\n" % item)
+
+  with open(language+'.'+ part+'.tgt.txt', 'w', encoding = 'utf8') as writer:
+    for item in abstracts:
+        writer.write("%s\n" % item)
 
 if __name__ == '__main__':
   if len(sys.argv) != 4:
