@@ -11,8 +11,8 @@ rouge = Rouge(use_ngram_buf=True)
 
 def load_data(src_file, tgt_file):
     docs = []
-    with open(src_file, 'r', encoding='utf-8', errors='ignore') as src_reader, \
-            open(tgt_file, 'r', encoding='utf-8', errors='ignore') as tgt_reader:
+    with open(src_file, 'r') as src_reader, \
+            open(tgt_file, 'r') as tgt_reader:
         for src_line, tgt_line in zip(src_reader, tgt_reader):
             src_line = src_line.strip()
             tgt_line = tgt_line.strip()
