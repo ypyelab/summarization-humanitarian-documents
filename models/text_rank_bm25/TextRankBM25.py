@@ -7,8 +7,7 @@
 import sys
 import logging
 from gensim.summarization.pagerank_weighted import pagerank_weighted as _pagerank
-sys.path.append("/idiap/temp/jbello/preprocess/")
-from textcleaner import clean_text_by_sentences as _clean_text_by_sentences
+from gensim.summarization.textcleaner import merge_syntactic_units
 from gensim.summarization.commons import build_graph as _build_graph
 from gensim.summarization.commons import remove_unreachable_nodes as _remove_unreachable_nodes
 from gensim.summarization.bm25 import get_bm25_weights as _bm25_weights
@@ -18,7 +17,7 @@ from six.moves import xrange
 
 
 INPUT_MIN_LENGTH = 0
-
+INPUT_MAX_LENGTH = 200
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +171,15 @@ def summarize_corpus(corpus, ratio=0.2, weight_threshold = 1.e-3):
     else:
         return [list(doc) for doc in hashable_corpus[:int(len(corpus) * ratio)]]
 
+def apply_filters(sentence, filters):
+    for f in filters:
+        sentence = f(sentence)
+    return sentence
 
+def filter_words(sentences):
+    filters = [lambda x: x.lower()]
+    apply_filters_to_token = lambda token: apply_filters(token, filters)
+    return list(map(apply_filters_to_token, sentences))
 
 def summarize(text, ratio=0.2, word_count=None, weight_threshold = 1.e-3, split=False):
     """
@@ -194,8 +201,11 @@ def summarize(text, ratio=0.2, word_count=None, weight_threshold = 1.e-3, split=
         word_count determines how many words will the output contain.
     If both parameters are provided, the ratio will be ignored.
     """
+    #import pdb; pdb.set_trace()
     # Gets a list of processed sentences.
-    sentences = _clean_text_by_sentences(text)
+    sentences = text.split('##SENT##')
+    sentences_tok = filter_words(sentences)
+    sentences = merge_syntactic_units(sentences,sentences_tok)
     
     # If no sentence could be identified, the function ends.
     if len(sentences) == 0:
@@ -211,6 +221,10 @@ def summarize(text, ratio=0.2, word_count=None, weight_threshold = 1.e-3, split=
     if len(sentences) < INPUT_MIN_LENGTH:
         logger.warning("Input text is expected to have at least " + str(INPUT_MIN_LENGTH) + " sentences.")
 
+    # Warns if the text is too long.
+    if len(sentences) > INPUT_MAX_LENGTH:
+        logger.warning("Input text is expected to have at most " + str(INPUT_MAX_LENGTH) + " sentences. Document is shortened.")
+        sentences = sentences[:200]
     corpus = _build_corpus(sentences)
 
     most_important_docs = summarize_corpus(corpus, ratio=ratio if word_count is None else 1, weight_threshold=weight_threshold)
