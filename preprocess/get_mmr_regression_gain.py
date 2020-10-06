@@ -3,12 +3,26 @@ import random
 import math
 from ast import literal_eval as make_tuple
 
-from find_oracle import load_data
 from PyRouge.Rouge.Rouge import Rouge
 from Document import Document
 
+
 rouge = Rouge(use_ngram_buf=True)
 
+def load_data(src_file, tgt_file):
+    docs = []
+    with open(src_file, 'r', encoding='utf-8', errors='ignore') as src_reader, \
+            open(tgt_file, 'r', encoding='utf-8', errors='ignore') as tgt_reader:
+        for src_line, tgt_line in zip(src_reader, tgt_reader):
+            src_line = src_line.strip()
+            tgt_line = tgt_line.strip()
+            if src_line == "" or tgt_line == "":
+                docs.append(None)
+                continue
+            src_sents = src_line.split('##SENT##')
+            tgt_sents = tgt_line.strip().split('##SENT##')
+            docs.append(Document(src_sents, tgt_sents))
+    return docs
 
 def load_upperbound(filepath):
     res = []
@@ -69,7 +83,7 @@ def get_mmr_regression(oracle, doc):
 def main(src_file, tgt_file, oracle_file, output_file):
     docs = load_data(src_file, tgt_file)
     oracles = load_upperbound(oracle_file)
-
+    
     acc = 0
     count = 0
     for item in oracles:
@@ -77,8 +91,7 @@ def main(src_file, tgt_file, oracle_file, output_file):
             acc += item[1]
             count += 1
     print('upper bound: {0}'.format(acc / count))
-    print('number of documents: '+ str(count))
-    
+
     count = 0
     with open(output_file, 'w', encoding='utf-8') as writer:
         for doc, oracle in zip(docs, oracles):
